@@ -1,33 +1,51 @@
 import math
-import string
+from collections import Counter
 
-def check_password_entropy(pwd: str) -> int:
-    char_set_size = 0
+def format_time(seconds: float) -> str:
+    """Convert seconds to a human-readable string with rounded values."""
+    intervals = (
+        ('years', 60 * 60 * 24 * 365),
+        ('days', 60 * 60 * 24),
+        ('hours', 60 * 60),
+        ('minutes', 60),
+        ('seconds', 1),
+    )
+    for name, count in intervals:
+        if seconds >= count:
+            value = seconds / count
+            return f"{round(value)} {name}"
+    return "less than 1 second"
 
-    if any(c.islower() for c in pwd):
-        char_set_size += 26
+def check_password_entropy(pwd: str, guesses_per_second: float = 1e10):
+    """
+    Calculate Shannon entropy, classify strength (0–4), and estimate offline attack time.
+    """
+    freq = Counter(pwd)
+    total = len(pwd)
+    # Shannon entropy per character
+    entropy = -sum((count / total) * math.log2(count / total) for count in freq.values()) if total > 0 else 0
+    total_entropy = entropy * total
 
-    if any(c.isupper() for c in pwd):
-        char_set_size += 26
+    # Offline attack time estimation
+    total_guesses = 2 ** total_entropy/10
+    time_seconds = total_guesses / guesses_per_second
+    time_str = format_time(time_seconds)
 
-    if any(c.isdigit() for c in pwd):
-        char_set_size += 10
+    print(f"{len(pwd)=}, {pwd=}, per_char_entropy={entropy:.2f}, total_entropy={total_entropy:.2f} bits")
+    print(f"Estimated offline attack time (~{guesses_per_second:.0e} guesses/sec): {time_str}")
 
-    if any(c in string.punctuation for c in pwd):
-        char_set_size += 32  # estimated size of common symbol set
-
-    if char_set_size == 0:
-        return 0  # prevent log2(0)
-
-    entropy = len(pwd) * math.log2(char_set_size)
-
-    if entropy < 28:
-        return 0
-    elif entropy < 36:
-        return 1
-    elif entropy < 60:
-        return 2
-    elif entropy < 128:
-        return 3
+    # Strength classification (unchanged)
+    if total_entropy < 28:
+        strength = 0  # Very Weak
+    elif total_entropy < 36:
+        strength = 1  # Weak
+    elif total_entropy < 60:
+        strength = 2  # Reasonable
+    elif total_entropy < 128:
+        strength = 3  # Strong
     else:
-        return 4
+        strength = 4  # Very Strong
+
+    return strength, time_str
+
+# Example usage

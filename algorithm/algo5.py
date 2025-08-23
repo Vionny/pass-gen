@@ -33,7 +33,7 @@ def random_substitute_per_preference(pwd, preferences, loaded_dicts, desired_len
     min_amt = math.floor(desired_length / 4)
     max_amt = math.ceil(desired_length / 2)
     to_change = random.sample(available_indexes, k=(max_amt-min_amt)) 
-    print(available_indexes,to_change)
+    # print(available_indexes,to_change)
 
     for _ in to_change:
         if not available_indexes:
@@ -50,14 +50,14 @@ def random_substitute_per_preference(pwd, preferences, loaded_dicts, desired_len
         available_indexes.remove(index)
 
         current_char = modified_pwd[index]
-        print(index)
+        # print(index)
         if pref in preferences:
             subst_dict = next((d[pref] for d in loaded_dicts if pref in d), None)
 
             if subst_dict:
                 if current_char in subst_dict:
                     replacement = random.choice(subst_dict[current_char])
-                    print(current_char,replacement)
+                    # print(current_char,replacement)
                     modified_pwd[index] = replacement
             # print(current_char,subst_dict[current_char])
             # if current_char in subst_dict:

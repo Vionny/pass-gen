@@ -2,13 +2,16 @@ import json
 import os
 
 def read_dict_file(pref):
-    """Reads a JSON dictionary file for a given preference name."""
-    path = f'./dicts/leet_{pref}.json'
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(base_dir, '..', 'dicts', f'leet_{pref}.json')
+    path = os.path.abspath(path)
+
     if not os.path.exists(path):
         raise FileNotFoundError(f'Dictionary file not found: {path}')
-    
+
     with open(path, 'r') as file:
         return json.load(file)
+
 
 def load_preference_dicts(preferences):
     """
