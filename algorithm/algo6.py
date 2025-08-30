@@ -1,51 +1,103 @@
 import math
 from collections import Counter
 
-def format_time(seconds: float) -> str:
-    """Convert seconds to a human-readable string with rounded values."""
-    intervals = (
-        ('years', 60 * 60 * 24 * 365),
-        ('days', 60 * 60 * 24),
-        ('hours', 60 * 60),
-        ('minutes', 60),
-        ('seconds', 1),
-    )
-    for name, count in intervals:
-        if seconds >= count:
-            value = seconds / count
-            return f"{round(value)} {name}"
-    return "less than 1 second"
+def display_time(seconds: float) -> str:
+    intervals = [
+        ("century", 60 * 60 * 24 * 365 * 100),
+        ("year", 60 * 60 * 24 * 365),
+        ("month", 60 * 60 * 24 * 31),
+        ("day", 60 * 60 * 24),
+        ("hour", 60 * 60),
+        ("minute", 60),
+        ("second", 1),
+    ]
 
-def check_password_entropy(pwd: str, guesses_per_second: float = 1e10):
-    """
-    Calculate Shannon entropy, classify strength (0–4), and estimate offline attack time.
-    """
+    if seconds < 1:
+        return "less than a second"
+
+    parts = []
+    for name, count in intervals:
+        value = seconds // count
+        if value:
+            seconds -= value * count
+            # handle irregular plural
+            if name == "century":
+                unit = "century" if value == 1 else "centuries"
+            else:
+                unit = name if value == 1 else name + "s"
+
+            parts.append(f"{value:,.0f} {unit}")
+
+    return " ".join(parts)
+
+
+def guesses_to_score(guesses: float) -> int:
+    DELTA = 5
+    if guesses < 1e3 + DELTA:
+        return 0
+    elif guesses < 1e6 + DELTA:
+        return 1
+    elif guesses < 1e8 + DELTA:
+        return 2
+    elif guesses < 1e10 + DELTA:
+        return 3
+    else:
+        return 4
+
+def estimate_attack_times(guesses: float) -> dict:
+    crack_times_seconds = {
+        "online_throttling_100_per_hour": guesses / (100 / 3600),
+        "online_no_throttling_10_per_second": guesses / 10,
+        "offline_slow_hashing_1e4_per_second": guesses / 1e4,
+        "offline_fast_hashing_1e10_per_second": guesses / 1e10,
+    }
+
+    crack_times_display = {
+        scenario: display_time(seconds)
+        for scenario, seconds in crack_times_seconds.items()
+    }
+
+    return {
+        "crack_times_seconds": crack_times_seconds,
+        "crack_times_display": crack_times_display,
+        "score": guesses_to_score(guesses),
+    }
+
+def check_password_entropy(pwd: str):
+    """Shannon entropy."""
     freq = Counter(pwd)
     total = len(pwd)
-    # Shannon entropy per character
-    entropy = -sum((count / total) * math.log2(count / total) for count in freq.values()) if total > 0 else 0
-    total_entropy = entropy * total
+    entropy_per_char = -sum(
+        (count / total) * math.log2(count / total) for count in freq.values()
+    ) if total > 0 else 0
+    total_entropy = entropy_per_char * total
 
-    # Offline attack time estimation
-    total_guesses = 2 ** total_entropy/10
-    time_seconds = total_guesses / guesses_per_second
-    time_str = format_time(time_seconds)
+    total_guesses = 0.5 * (2 ** total_entropy)
+    results = estimate_attack_times(total_guesses)
 
-    print(f"{len(pwd)=}, {pwd=}, per_char_entropy={entropy:.2f}, total_entropy={total_entropy:.2f} bits")
-    print(f"Estimated offline attack time (~{guesses_per_second:.0e} guesses/sec): {time_str}")
+    time_display = results["crack_times_display"]["online_throttling_100_per_hour"]
+    time_seconds = results["crack_times_seconds"]["online_throttling_100_per_hour"]
 
-    # Strength classification (unchanged)
-    if total_entropy < 28:
-        strength = 0  # Very Weak
-    elif total_entropy < 36:
-        strength = 1  # Weak
-    elif total_entropy < 60:
-        strength = 2  # Reasonable
-    elif total_entropy < 128:
-        strength = 3  # Strong
-    else:
-        strength = 4  # Very Strong
+    print(f"[Shannon] {pwd=}, per_char_entropy={entropy_per_char:.2f}, total_entropy={total_entropy:.2f} bits, time={time_display}")
+    return results["score"], time_display, time_seconds
 
-    return strength, time_str
+def check_password_min_entropy(pwd: str):
+    """Min-entropy (worst-case predictability)."""
+    freq = Counter(pwd)
+    total = len(pwd)
+    if total == 0:
+        return 0, "N/A", 0
 
-# Example usage
+    max_prob = max(count / total for count in freq.values())
+    entropy_per_char = -math.log2(max_prob)
+    total_entropy = entropy_per_char * total
+
+    total_guesses = 0.5 * (2 ** total_entropy)
+    results = estimate_attack_times(total_guesses)
+
+    time_display = results["crack_times_display"]["online_throttling_100_per_hour"]
+    time_seconds = results["crack_times_seconds"]["online_throttling_100_per_hour"]
+
+    print(f"[Min]     {pwd=}, per_char_entropy={entropy_per_char:.2f}, total_entropy={total_entropy:.2f} bits, time={time_display}")
+    return results["score"], time_display, time_seconds
+

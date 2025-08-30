@@ -1,166 +1,270 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Password Generator</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 text-gray-900 p-6">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Password Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 text-gray-900 p-6">
+    <div class="w-full mx-auto bg-white p-6 rounded shadow">
 
-  <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-4">🔢 Password Generator</h1>
+      <h1 class="text-2xl font-bold mb-4">🔢 Password Generator</h1>
 
-    <div class="flex gap-8 flex-wrap">
+      <div class="flex flex-row gap-8 ">
+        <!-- LEFT PANEL -->
+        <div class="flex-col w-1/3">
+          <label class="block font-semibold"
+            >Amount of numbers to generate</label
+          >
+          <input
+            id="amount"
+            type="number"
+            value="5"
+            class="border p-2 w-full mb-4"
+          />
 
-      <!-- LEFT PANEL -->
-      <div class="flex-1 min-w-[300px]">
-        <label class="block font-semibold">Amount of numbers to generate</label>
-        <input id="amount" type="number" value="5" class="border p-2 w-full mb-4" />
+          <label class="block font-semibold"
+            >Keywords (Checklist to prioritize)</label
+          >
+          <div id="keyword-container" class="space-y-2 mb-2"></div>
+          <button onclick="addRow()" class="bg-gray-200 px-3 py-1 rounded">
+            + Add another
+          </button>
 
-        <label class="block font-semibold">Keywords (Checklist to prioritize)</label>
-        <div id="keyword-container" class="space-y-2 mb-2"></div>
-        <button onclick="addRow()" class="bg-gray-200 px-3 py-1 rounded">+ Add another</button>
+          <label class="block font-semibold mt-4">Desired Length</label>
+          <input
+            id="length"
+            type="range"
+            min="8"
+            max="22"
+            value="12"
+            class="w-full"
+            oninput="updateLength(this.value)"
+          />
+          <div id="length-label" class="mb-4">Length: 12</div>
 
-        <label class="block font-semibold mt-4">Desired Length</label>
-        <input id="length" type="range" min="8" max="22" value="12" class="w-full" oninput="updateLength(this.value)">
-        <div id="length-label" class="mb-4">Length: 12</div>
-
-        <label class="block font-semibold">Options</label>
-        <div class="flex gap-4 mb-4">
-          <label><input type="checkbox" id="number"> Include numbers</label>
-          <label><input type="checkbox" id="symbol"> Include symbols</label>
+          <button
+            onclick="generate()"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Generate
+          </button>
         </div>
 
-        <button onclick="generate()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Generate</button>
-      </div>
+        <!-- RIGHT PANEL -->
+        <div class="flex-col w-2/3">
+          <h2 class="text-lg font-semibold mb-2">Generated Passwords</h2>
+          <button
+            onclick="copyAllPasswords()"
+            class="mb-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+          >
+            📋 Copy All
+          </button>
+          <label class="block mb-2"> <input type="checkbox" id="include-strength" class="mr-2" /> Include strength in copy </label>
+          <div id="avg-container" class="mt-4 hidden">
+            <h3 class="font-semibold">Shannon Average Time to Crack:</h3>
+            <div class="flex items-start gap-2 flex-row">
+              <span id="avg-shannon-time" class="font-mono"></span>
+              <button
+                onclick="copyAvg()"
+                class="text-blue-600 hover:underline text-sm"
+              >
+                📋 Copy
+              </button>
+            </div>
+          </div>
+          <div id="avg-container2" class="mt-4 hidden">
+            <h3 class="font-semibold">Min Average Time to Crack:</h3>
+            <div class="flex items-start gap-2 flex-row">
+              <span id="avg-min-time" class="font-mono"></span>
+              <button
+                onclick="copyAvg2()"
+                class="text-blue-600 hover:underline text-sm"
+              >
+                📋 Copy
+              </button>
+            </div>
+          </div>
 
-      <!-- RIGHT PANEL -->
-      <div class="flex-1 min-w-[300px]">
-        <h2 class="text-lg font-semibold mb-2">Generated Passwords</h2>
-        <button onclick="copyAllPasswords()" class="mb-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">📋 Copy All</button>
-        <label class="block mb-2">
-          <input type="checkbox" id="include-strength" class="mr-2" />
-          Include strength in copy
-        </label>
+          <table class="table-auto w-full text-left border-collapse text-center">
+            <thead>
+              <tr>
+                <th rowspan="2" class="border-b p-2">Password</th>
+                <th colspan="2" class="text-center border-b p-2">Shannon</th>
+                <th colspan="2" class="text-center border-b p-2">Min</th>
+              </tr>
+              <tr>
+                <th class="border-b p-2">Strength</th>
+                <th class="border-b p-2">Time to Crack</th>
+                <th class="border-b p-2">Strength</th>
+                <th class="border-b p-2">Time to Crack</th>
+              </tr>
+            </thead>
+            <tbody id="output-table" class="text-center"></tbody>
+          </table>
 
-        <table class="table-auto w-full text-left">
-          <thead><tr><th>Password</th><th>Strength</th><th>Time to Crack</th></tr></thead>
-          <tbody id="output-table"></tbody>
-        </table>
-
-        <button onclick="clearOutput()" class="mt-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Clear Output</button>
+          <button
+            onclick="clearOutput()"
+            class="mt-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+          >
+            Clear Output
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    const strengthMap = ['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'];
+    <script>
+      const strengthMap = [
+        "Very Weak",
+        "Weak",
+        "Moderate",
+        "Strong",
+        "Very Strong",
+      ];
 
-    function updateLength(val) {
-      document.getElementById('length-label').innerText = `Length: ${val}`;
-    }
+      function updateLength(val) {
+        document.getElementById("length-label").innerText = `Length: ${val}`;
+      }
 
-    function addRow() {
-      const container = document.getElementById('keyword-container');
-      const row = document.createElement('div');
-      row.className = "flex gap-2 items-center";
-      row.innerHTML = `
+      function addRow() {
+        const container = document.getElementById("keyword-container");
+        const row = document.createElement("div");
+        row.className = "flex gap-2 items-center";
+        row.innerHTML = `
         <input type="text" placeholder="Keyword" class="border p-1 w-40" />
         <input type="checkbox" />
         <button onclick="this.parentElement.remove()" class="text-red-500">❌</button>
       `;
-      container.appendChild(row);
-    }
-
-    function clearOutput() {
-      document.getElementById('output-table').innerHTML = '';
-    }
-
-    function copyAllPasswords() {
-      const includeStrength = document.getElementById('include-strength').checked;
-
-      const rows = document.querySelectorAll('#output-table tr');
-      const lines = Array.from(rows).map(tr => {
-        const password = tr.querySelector('td:first-child span')?.textContent || '';
-        const strength = tr.querySelector('td:nth-child(2)')?.textContent || '';
-        return includeStrength ? `${password} (${strength})` : password;
-      });
-
-      if (lines.length > 0) {
-        navigator.clipboard.writeText(lines.join('\n'));
-        alert('Passwords copied!');
-      } else {
-        alert('No passwords to copy.');
+        container.appendChild(row);
       }
-    }
 
+      function clearOutput() {
+        document.getElementById("output-table").innerHTML = "";
+      }
 
-    function generate() {
-      const rows = document.querySelectorAll('#keyword-container > div');
-      const dropdown_rows = Array.from(rows).map(row => ({
-        input: row.querySelector('input[type=text]').value,
-        checked: row.querySelector('input[type=checkbox]').checked
-      }));
+      function copyAllPasswords() {
+        const includeStrength =
+          document.getElementById("include-strength").checked;
 
-      const payload = {
-        amount: document.getElementById('amount').value,
-        length: document.getElementById('length').value,
-        pref: {
-          number: document.getElementById('number').checked,
-          symbol: document.getElementById('symbol').checked
-        },
-        dropdown_rows
-      };
-
-      fetch('/generate', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.error) {
-          alert(data.error);
-          return;
-        }
-
-        const tbody = document.getElementById('output-table');
-        tbody.innerHTML = '';
-        data.passwords.forEach(row => {
-          const tr = document.createElement('tr');
-
-          const td1 = document.createElement("td");
-          td1.className = "flex items-center gap-2";
-
-          const span = document.createElement("span");
-          span.textContent = row.password;
-
-          const copyBtn = document.createElement("button");
-          copyBtn.textContent = "📋";
-          copyBtn.className = "text-blue-600 hover:underline text-sm";
-          copyBtn.onclick = () => {
-            navigator.clipboard.writeText(row.password);
-            alert('Password copied!');
-          }
-          td1.appendChild(copyBtn);
-
-          td1.appendChild(span);
-
-          const td2 = document.createElement("td");
-          td2.textContent = strengthMap[row.strength];
-          const td3 = document.createElement("td");
-          td3.textContent = row.time;
-
-          tr.appendChild(td1);
-          tr.appendChild(td2);
-          tr.appendChild(td3);
-          tbody.appendChild(tr);
+        const rows = document.querySelectorAll("#output-table tr");
+        const lines = Array.from(rows).map((tr) => {
+          const password =
+            tr.querySelector("td:first-child span")?.textContent || "";
+          const strength_shannon =
+            tr.querySelector("td:nth-child(2)")?.textContent || "";
+          const time_shannon =
+            tr.querySelector("td:nth-child(3)")?.textContent || "";
+          const strength_min =
+            tr.querySelector("td:nth-child(4)")?.textContent || "";
+          const time_min =
+            tr.querySelector("td:nth-child(5)")?.textContent || "";
+          return includeStrength ? `Password : ${password} , Shannon : ${strength_shannon}|${time_shannon} , Min : ${strength_min}|${time_min}` : password;
         });
-      });
-    }
 
-    // Add one initial row
-    addRow();
-  </script>
-</body>
+        if (lines.length > 0) {
+          navigator.clipboard.writeText(lines.join("\n"));
+          alert("Passwords copied!");
+        } else {
+          alert("No passwords to copy.");
+        }
+      }
+
+      function generate() {
+        const rows = document.querySelectorAll("#keyword-container > div");
+        const dropdown_rows = Array.from(rows).map((row) => ({
+          input: row.querySelector("input[type=text]").value,
+          checked: row.querySelector("input[type=checkbox]").checked,
+        }));
+
+        const payload = {
+          amount: document.getElementById("amount").value,
+          length: document.getElementById("length").value,
+          pref: {},
+          dropdown_rows,
+        };
+
+        fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.error) {
+              alert(data.error);
+              return;
+            }
+
+            const tbody = document.getElementById("output-table");
+            tbody.innerHTML = "";
+            data.passwords.forEach((row) => {
+              const tr = document.createElement("tr");
+
+              const td1 = document.createElement("td");
+              td1.className = "flex items-center gap-2";
+
+              const span = document.createElement("span");
+              span.textContent = row.password;
+
+              const copyBtn = document.createElement("button");
+              copyBtn.textContent = "📋";
+              copyBtn.className = "text-blue-600 hover:underline text-sm";
+              copyBtn.onclick = () => {
+                navigator.clipboard.writeText(row.password);
+                alert("Password copied!");
+              };
+              td1.appendChild(copyBtn);
+
+              td1.appendChild(span);
+
+              const td2 = document.createElement("td");
+              td2.textContent = strengthMap[row.shannon_strength];
+              const td3 = document.createElement("td");
+              td3.textContent = row.shannon_time;
+              const td4 = document.createElement("td");
+              td4.textContent = strengthMap[row.min_strength];
+              const td5 = document.createElement("td");
+              td5.textContent = row.min_time;
+
+              tr.appendChild(td1);
+              tr.appendChild(td2);
+              tr.appendChild(td3);
+              tr.appendChild(td4);
+              tr.appendChild(td5);
+              tbody.appendChild(tr);
+
+              if (data.average_shannon_time && data.average_min_time) {
+                document.getElementById("avg-shannon-time").textContent =
+                  data.average_shannon_time;
+                document.getElementById("avg-min-time").textContent =
+                data.average_min_time;
+                document
+                  .getElementById("avg-container")
+                  .classList.remove("hidden");
+                document
+                .getElementById("avg-container2")
+                .classList.remove("hidden");
+              }
+            });
+          });
+      }
+
+      function copyAvg() {
+        const avgText = document.getElementById("avg-shannon-time").textContent;
+        if (avgText) {
+          navigator.clipboard.writeText(avgText);
+          alert("Average time copied!");
+        }
+      }
+      function copyAvg2() {
+        const avgText = document.getElementById("avg-min-time").textContent;
+        if (avgText) {
+          navigator.clipboard.writeText(avgText);
+          alert("Average time copied!");
+        }
+      }
+      // Add one initial row
+      addRow();
+    </script>
+  </body>
 </html>
