@@ -72,7 +72,7 @@ def check_password_entropy(pwd: str):
     total_guesses = 0.5 * (2 ** total_entropy)
     results = estimate_attack_times(total_guesses)
 
-    time_display = results["crack_times_display"]["c"]
+    time_display = results["crack_times_display"]["online_throttling_100_per_hour"]
     time_seconds = results["crack_times_seconds"]["online_throttling_100_per_hour"]
 
     print(f"[Shannon] {pwd=}, per_char_entropy={entropy_per_char:.2f}, total_entropy={total_entropy:.2f} bits, time={time_display}")
