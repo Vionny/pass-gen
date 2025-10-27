@@ -37,9 +37,8 @@ def random_substitute_per_preference(pwd, preferences, loaded_dicts, desired_len
 
     for _ in to_change:
         if not available_indexes:
-            break  # no more characters to change
-
-        # Pick a preference
+            break  
+        
         if len(used_prefs) < len(preferences):
             pref = next(p for p in preferences if p not in used_prefs)
             used_prefs.add(pref)

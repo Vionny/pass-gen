@@ -47,9 +47,6 @@ def guesses_to_score(guesses: float) -> int:
 def estimate_attack_times(guesses: float) -> dict:
     crack_times_seconds = {
         "online_throttling_100_per_hour": guesses / (100 / 3600),
-        "online_no_throttling_10_per_second": guesses / 10,
-        "offline_slow_hashing_1e4_per_second": guesses / 1e4,
-        "offline_fast_hashing_1e10_per_second": guesses / 1e10,
     }
 
     crack_times_display = {
@@ -64,9 +61,9 @@ def estimate_attack_times(guesses: float) -> dict:
     }
 
 def check_password_entropy(pwd: str):
-    """Shannon entropy."""
     freq = Counter(pwd)
     total = len(pwd)
+    
     entropy_per_char = -sum(
         (count / total) * math.log2(count / total) for count in freq.values()
     ) if total > 0 else 0
@@ -75,14 +72,13 @@ def check_password_entropy(pwd: str):
     total_guesses = 0.5 * (2 ** total_entropy)
     results = estimate_attack_times(total_guesses)
 
-    time_display = results["crack_times_display"]["online_throttling_100_per_hour"]
+    time_display = results["crack_times_display"]["c"]
     time_seconds = results["crack_times_seconds"]["online_throttling_100_per_hour"]
 
     print(f"[Shannon] {pwd=}, per_char_entropy={entropy_per_char:.2f}, total_entropy={total_entropy:.2f} bits, time={time_display}")
     return results["score"], time_display, time_seconds
 
 def check_password_min_entropy(pwd: str):
-    """Min-entropy (worst-case predictability)."""
     freq = Counter(pwd)
     total = len(pwd)
     if total == 0:
