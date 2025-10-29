@@ -136,16 +136,43 @@
         row.innerHTML = `
           <input type="text" placeholder="Keyword" class="border p-1 w-40" />
           <input type="checkbox" />
-          <button onclick="this.parentElement.remove()" class="text-red-500">❌</button>
+          <button onclick="this.parentElement.remove(); updateTotalLength();" class="text-red-500">❌</button>
         `;
         container.appendChild(row);
+
+        const textInput = row.querySelector("input[type=text]");
+        const checkbox = row.querySelector("input[type=checkbox]");
+
+        // Update slider when checkbox or text changes
+        checkbox.addEventListener("change", updateTotalLength);
+        textInput.addEventListener("input", updateTotalLength);
       }
+
+      function updateTotalLength() {
+        const rows = document.querySelectorAll("#keyword-container > div");
+        const lengthSlider = document.getElementById("length");
+        const lengthLabel = document.getElementById("length-label");
+
+        let totalCheckedLength = 0;
+        rows.forEach((row) => {
+          const text = row.querySelector("input[type=text]").value.trim();
+          const checked = row.querySelector("input[type=checkbox]").checked;
+          if (checked && text.length > 0) totalCheckedLength += text.length;
+        });
+
+        const min = parseInt(lengthSlider.min);
+        const max = parseInt(lengthSlider.max);
+        const newValue = Math.min(max, Math.max(min, totalCheckedLength || min));
+
+        lengthSlider.value = newValue;
+        lengthLabel.textContent = `Length: ${newValue}`;
+      }
+
 
       function clearOutput(event) {
         const tbody = document.getElementById("output-table");
         if (tbody.innerHTML.trim() === "") return;
 
-        // Save current state
         lastCleared = tbody.innerHTML;
         tbody.innerHTML = "";
 
