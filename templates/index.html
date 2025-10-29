@@ -143,7 +143,6 @@
         const textInput = row.querySelector("input[type=text]");
         const checkbox = row.querySelector("input[type=checkbox]");
 
-        // Update slider when checkbox or text changes
         checkbox.addEventListener("change", updateTotalLength);
         textInput.addEventListener("input", updateTotalLength);
       }
@@ -154,19 +153,29 @@
         const lengthLabel = document.getElementById("length-label");
 
         let totalCheckedLength = 0;
+
         rows.forEach((row) => {
           const text = row.querySelector("input[type=text]").value.trim();
           const checked = row.querySelector("input[type=checkbox]").checked;
-          if (checked && text.length > 0) totalCheckedLength += text.length;
+          if (checked && text.length > 0) {
+            totalCheckedLength += text.length;
+          }
         });
 
         const min = parseInt(lengthSlider.min);
         const max = parseInt(lengthSlider.max);
-        const newValue = Math.min(max, Math.max(min, totalCheckedLength || min));
+        const currentValue = parseInt(lengthSlider.value);
 
-        lengthSlider.value = newValue;
-        lengthLabel.textContent = `Length: ${newValue}`;
+        if (totalCheckedLength >= min && totalCheckedLength !== currentValue) {
+          const newValue = Math.min(max, totalCheckedLength);
+          lengthSlider.value = newValue;
+          lengthLabel.textContent = `Length: ${newValue}`;
+        }
+
       }
+
+
+
 
 
       function clearOutput(event) {
